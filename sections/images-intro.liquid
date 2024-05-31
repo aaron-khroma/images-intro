@@ -1,0 +1,209 @@
+<section class="section" data-section-id="{{ section.id }}" data-section-type="images-intro">
+  <div class="container">
+    {%- capture images -%}
+      <div class="images-intro__images-container">
+          {%- if section.blocks.size > 0 -%}
+            {%- for block in section.blocks -%}
+              <div class="images-intro__image" style="width: {{ block.settings.width }}em; bottom: {{ block.settings.bottom }}em;  {%- if section.settings.images_position == 'left' -%}right{%- else -%}left{%- endif -%}: {{ block.settings.horizontal }}em;">
+                {{- block.settings.image | image_url: width: block.settings.image.width | image_tag: loading: 'lazy', sizes: 'min(100vw, 300px)', widths: '300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500' -}}
+              </div>
+            {%- endfor -%}
+          {%- else -%}
+            <div class="images-intro__image" style="width: 100em; bottom: 0; {%- if section.settings.images_position == 'left' -%}right{%- else -%}left{%- endif -%}: 0;">
+              {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+            </div>
+          {%- endif -%}
+      </div>
+    {%- endcapture -%}
+
+    {%- capture text -%}
+      <div class="images-intro__text-container">
+        {%- if section.settings.title != blank -%}
+          <h2>{{ section.settings.title | escape }}</h2>
+        {%- endif -%}
+
+        <div class="rte">
+          {{ section.settings.content }}
+
+          {%- if section.settings.button_link != blank and section.settings.button_text != blank -%}
+            <a href="{{ section.settings.button_link }}" class="button">{{ section.settings.button_text | escape }}</a>
+          {%- endif -%}
+        </div>
+      </div>
+    {%- endcapture -%}
+
+    <div class="images-intro">
+      {%- if section.settings.images_position == 'left' -%}
+        {{ images }}
+        {{ text }}
+      {%- else -%}
+        {{ text }}
+        {{ images }}
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+<style>
+
+{%- liquid
+  # Float hack: https://shopify.dev/docs/api/liquid/filters/divided_by
+  assign float_width = section.settings.images_width | divided_by: 1.0
+  assign float_height = section.settings.images_height | divided_by: 1.0
+  assign ratio = float_width | divided_by: float_height 
+  if section.settings.images_position == 'left'
+    assign fly_in_direction = -1
+  else
+    assign fly_in_direction = 1 
+  endif
+-%}
+
+.images-intro {
+  --images-container-ratio: {{ ratio }};
+}
+
+@media screen and (min-width: 641px) {
+  .images-intro {
+    --images-container-width: {{ section.settings.images_width }}vw;
+    --images-container-height: {{ section.settings.images_height }}vw;
+  }
+}
+
+.images-intro__image {
+  transform: translateX(calc({{ fly_in_direction }} * var(--fly-in-distance)));
+}
+
+</style>
+<script>
+  const imagesIntro = document.querySelector('.section[data-section-id="{{ section.id }}"] .images-intro');
+  function checkIfInViewport (ev) {
+    let rect = imagesIntro.getBoundingClientRect();
+    if (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+      rect.top <= (window.innerWidth || document.documentElement.clientWidth)
+    ) {
+      imagesIntro.setAttribute('enter', '');
+      window.removeEventListener('scroll', checkIfInViewport);
+    }
+  }
+  window.addEventListener('scroll', checkIfInViewport);
+  checkIfInViewport();
+</script>
+
+{% schema %}
+{
+  "name": "Images intro",
+  "settings": [
+    {
+      "type": "select",
+      "id": "images_position",
+      "label": "Images position",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "range",
+      "id": "images_width",
+      "min": 20,
+      "max": 70,
+      "step": 5,
+      "unit": "%",
+      "label": "Image area width",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "images_height",
+      "min": 20,
+      "max": 70,
+      "step": 5,
+      "unit": "%",
+      "label": "Image area height",
+      "default": 50
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Your title"
+    },
+    {
+      "type": "richtext",
+      "id": "content",
+      "label": "Text",
+      "default": "<p>Use this text to share information about your brand with your customers.<br>Describe a product, share announcements, or welcome customers to your store.</p>"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "default": "Our products"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link",
+      "default": "/collections/all"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "image-overlaid",
+      "name": "Overlaid image",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image",
+          "info": "Transparent .png recommended"
+        },
+        {
+          "type": "range",
+          "id": "width",
+          "min": 10,
+          "max": 100,
+          "unit": "%",
+          "label": "Percent wide",
+          "default": 30
+        },
+        {
+          "type": "range",
+          "id": "horizontal",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "label": "Percent from center",
+          "default": 10
+        },
+        {
+          "type": "range",
+          "id": "bottom",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "label": "Percent from bottom",
+          "default": 10
+        }
+      ],
+      "limit": 5
+    }
+  ],
+  "presets": [
+    {
+      "category": "Kegco",
+      "name": "Images intro",
+      "settings": {}
+    }
+  ]
+}
+{% endschema %}
